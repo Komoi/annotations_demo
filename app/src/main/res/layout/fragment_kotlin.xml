@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools">
+
+	<data>
+		<import type="android.view.View" />
+
+		<variable
+			name="view"
+			type="com.ondrejkomarek.annotationtest.KotlinView" />
+
+		<variable
+			name="viewModel"
+			type="com.ondrejkomarek.annotationtest.KotlinViewModel" />
+	</data>
+
+	<android.support.constraint.ConstraintLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		tools:context=".KotlinActivity">
+
+		<TextView
+			android:id="@+id/home_text"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Kotlin activity"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			android:textSize="30sp"/>
+
+
+
+		<Button
+			android:id="@+id/open_java_activity"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Open java activity"
+			android:onClick="@{() -> view.onOpenJavaActivityClick()}"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/home_text" />
+
+	</android.support.constraint.ConstraintLayout>
+</layout>

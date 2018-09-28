@@ -1,11 +1,11 @@
 package com.ondrejkomarek.annotationtest;
 
-import com.ondrejkomarek.annotation.Annotation;
+import com.ondrejkomarek.annotation.ImmutableAnnotation;
 
 
-@Annotation
+@ImmutableAnnotation
 public class MutableClass {
-	private final String name;
+	private String name;
 
 	public MutableClass( final String name ) {
 		this.name = name;

@@ -8,5 +8,13 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
-public @interface Annotation {
+public @interface JavaAnnotation
+{
 }
+
+/*
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface JavaFieldAnnotation{
+}
+*/
