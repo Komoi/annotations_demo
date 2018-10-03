@@ -9,6 +9,8 @@ import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.*
+import javax.lang.model.type.TypeKind
+import javax.lang.model.type.TypeMirror
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
 
@@ -33,16 +35,58 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 		const val KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated"
 	}
 
+	//TODO kind of strange way how to get parameter and return type
+	private fun resolveElementType(typeMirror: TypeMirror?): KClass<out Any>?{
+		if (typeMirror == null){
+			throw Exception("There must be one argument for data setter.")
+		}
+
+		when(typeMirror.kind){
+			TypeKind.SHORT ->  processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: SHORT")
+			TypeKind.LONG -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: LONG")
+			TypeKind.FLOAT -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: FLOAT")
+			TypeKind.DOUBLE -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: DOUBLE")
+			TypeKind.INT -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: INT")
+			TypeKind.BOOLEAN -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: BOOLEAN")
+			TypeKind.BYTE -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: BYTE")
+			TypeKind.CHAR -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: CHAR")
+		}
+
+		return String::class
+		/*
+
+		when(typeMirror.kind){
+			TypeKind.SHORT -> return Short::class
+			TypeKind.LONG -> return Long::class
+			TypeKind.FLOAT -> return Float::class
+			TypeKind.DOUBLE -> return Double::class
+			TypeKind.INT -> return Int::class
+			TypeKind.BOOLEAN -> return Boolean::class
+			TypeKind.BYTE -> return Byte::class
+			TypeKind.CHAR -> return String::class
+		}
+
+		return null
+		*/
+	}
 
 	private fun processDaoMethodInfo(element: Element, annotationType: DaoAnnotationType, daoFunctions: HashMap<String, ArrayList<MethodInfo>>) {
-		if(element is ExecutableElement) {
+		if(element is ExecutableElement) { //TODO problem is that element is still basically java object, sow working with types etc... meh
 			val fileFunctions = ArrayList<MethodInfo>()
 
 			if(daoFunctions.containsKey(element.enclosingElement.toString())) {
 				fileFunctions.addAll(daoFunctions.getValue(element.enclosingElement.toString()))
 			}
 
-			fileFunctions.add(MethodInfo(String::class, String::class, element.simpleName.toString(), annotationType))
+			//TODO kind of strange way how to get parameter and return type
+			val returnType: KClass<out Any>? = if(annotationType == DaoAnnotationType.ANNOTATION_LOAD) {resolveElementType(element.returnType)} else {null}
+			val parameterType: KClass<out Any>? = if(annotationType == DaoAnnotationType.ANNOTATION_SAVE) {resolveElementType(element.parameters.firstOrNull()?.asType())} else {null}
+
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "\n\nANNOTATION_SAVE - PROCESSING: ${element.simpleName.toString()}")
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "returnType: ${returnType?.let { "Notnull "}?: "null"} ")
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "parameterType: ${parameterType?.let { "Notnull "}?: "null"} ")
+
+			fileFunctions.add(MethodInfo(parameterType, returnType, element.simpleName.toString(), annotationType))
 			daoFunctions.set(element.enclosingElement.toString(), fileFunctions)
 
 			processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "${if(annotationType == DaoAnnotationType.ANNOTATION_LOAD) {
@@ -136,6 +180,8 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 		//TODO get annotations, go trough them, generate e.g. Dao class based on what methods are annotated
 
 		if(!generated) {
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "daoFiles size: ${daoFunctions.size}")
+
 			generateTestFakeDaoClass(daoFunctions)
 			generateTestFakeDatabseClass(daoFunctions, roundEnvironment)
 			generated = true
@@ -178,6 +224,8 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 		for(fileContent in files) {
 			val baseFakeDao = ClassName(getPackageName(fileContent.key), getClassName(fileContent.key)) //replace with more robust solution, move possibly to new package
 
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "daoFunctions size: ${fileContent.value.size}")
+
 			val fileName = "${getClassName(fileContent.key)}Implementation"
 			val klass = TypeSpec.classBuilder(fileName)
 					.addSuperinterface(baseFakeDao)
@@ -185,8 +233,16 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 			for(method in fileContent.value) {
 				when {
 					method.daoAnnotationType == DaoAnnotationType.ANNOTATION_SAVE -> {
+
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "\n\nANNOTATION_SAVE 1 ${method.methodName}")
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "returnType: ${method.returnType?.let { "Notnull "}?: "null"} ")
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "-> REQ parameterType: ${method.parameterType?.let { "Notnull "}?: "null"} ")
+
+
 						method.parameterType?.let {
 							parameterType ->
+							processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "ANNOTATION_SAVE 2")
+
 							klass
 									.addFunction(FunSpec.builder(getSimpleMethodname(method.methodName))
 											//.returns(String::class)
@@ -199,8 +255,15 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 						}
 					}
 					method.daoAnnotationType == DaoAnnotationType.ANNOTATION_LOAD -> {
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "\n\nANNOTATION_LOAD 1${method.methodName}")
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "-> REQ returnType: ${method.returnType?.let { "Notnull "}?: "null"} ")
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "parameterType: ${method.parameterType?.let { "Notnull "}?: "null"} ")
+
+
 						method.returnType?.let {
 							returnType ->
+							processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "ANNOTATION_LOAD 2")
+
 							klass
 									.addFunction(FunSpec.builder(getSimpleMethodname(method.methodName))
 											.returns(returnType)
@@ -229,7 +292,7 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 		roundEnvironment.getElementsAnnotatedWith(Database::class.java)
 				.forEach {
 
-					val baseFakeDatabase = ClassName(getPackageName(it.toString()), getClassName(it.toString())) // TODO replace with more robust solution, move possibly to new package
+					val baseFakeDatabase = ClassName(getPackageName(it.toString()), getClassName(it.toString())) // TODO replace with more robust solution, move base DB possibly to new package. Maybe rename this fied
 					val fileName = "${getClassName(it.toString())}Implementation"
 
 					val klass = TypeSpec.classBuilder(fileName)
