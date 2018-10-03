@@ -5,14 +5,10 @@ import com.ondrejkomarek.annotation.KotlinClassAnnotation
 import com.ondrejkomarek.annotation.Load
 import com.ondrejkomarek.annotation.Save
 import com.squareup.kotlinpoet.*
-import sun.reflect.generics.tree.ReturnType
 import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
-import javax.lang.model.element.ExecutableElement
-import javax.lang.model.element.Modifier
-import javax.lang.model.element.TypeElement
-import javax.lang.model.element.VariableElement
+import javax.lang.model.element.*
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
 
@@ -38,6 +34,25 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 	}
 
 
+	private fun processDaoMethodInfo(element: Element, annotationType: DaoAnnotationType, daoFunctions: HashMap<String, ArrayList<MethodInfo>>) {
+		if(element is ExecutableElement) {
+			val fileFunctions = ArrayList<MethodInfo>()
+
+			if(daoFunctions.containsKey(element.enclosingElement.toString())) {
+				fileFunctions.addAll(daoFunctions.getValue(element.enclosingElement.toString()))
+			}
+
+			fileFunctions.add(MethodInfo(String::class, String::class, element.simpleName.toString(), annotationType))
+			daoFunctions.set(element.enclosingElement.toString(), fileFunctions)
+
+			processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "${if(annotationType == DaoAnnotationType.ANNOTATION_LOAD) {
+				"Load"
+			} else {
+				"Save"
+			}} Element: ${getSimpleMethodname(element.simpleName.toString())}, enclosing class: ${getClassName(element.enclosingElement.toString())}, package: ${getPackageName(element.enclosingElement.toString())}")
+		}
+	}
+
 	override fun process(set: Set<TypeElement>, roundEnvironment: RoundEnvironment): Boolean {
 
 		processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "${cycle++} - Kotlin annotation processing round started, supported: $supportedAnnotationTypes")
@@ -55,73 +70,62 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 		getInfo(Diagnostic.Kind.NOTE, roundEnvironment, KotlinConstructorAnnotation::class)
 */
 		//just temp to get pack
-		var tempPack = ""
 
 		roundEnvironment.getElementsAnnotatedWith(KotlinClassAnnotation::class.java)
 				.forEach {
 					val className = it.simpleName.toString()
 					val pack = processingEnv.elementUtils.getPackageOf(it).toString()
-					tempPack = pack
-					generateClass(className, pack)
+					generateExampleClass(className, pack)
 				}
 
 
 		//this is used to gather info about methods in classes and generate the file all at once during one for cycle
-		// Elegant? LOL
-		var daoFunctions = HashMap<String, HashMap<DaoAnnoatationTypes, ArrayList<String>>>()
+		val daoFunctions = HashMap<String, ArrayList<MethodInfo>>()
 
 		roundEnvironment.getElementsAnnotatedWith(Save::class.java)
 				.forEach {
-					//TODO make next few lines more nice and reusable
-					if(it is ExecutableElement) {
-						if(daoFunctions.containsKey(it.enclosingElement.toString())) {
-							//Pair(DaoAnnoatationTypes.ANNOTATION_SAVE,
-							val fileFunctionMap = daoFunctions.getValue(it.enclosingElement.toString())
-
-							fileFunctionMap.get(DaoAnnoatationTypes.ANNOTATION_SAVE)?.let { saveArrayList ->
-								saveArrayList.add(getSimpleMethodname(it.simpleName.toString()))
-							}
-									?: fileFunctionMap.set(DaoAnnoatationTypes.ANNOTATION_SAVE, arrayListOf(it.simpleName.toString())); daoFunctions.set(it.enclosingElement.toString(), fileFunctionMap) //TODO test if works properly - is it being saved?
-
-							daoFunctions.set(it.enclosingElement.toString(), fileFunctionMap)
-						} else {
-							daoFunctions.set(it.enclosingElement.toString(), hashMapOf(Pair(DaoAnnoatationTypes.ANNOTATION_SAVE, arrayListOf(it.simpleName.toString()))))
-						}
-						processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "Save Element: ${getSimpleMethodname(it.simpleName.toString())}, enclosing class: ${getClassName(it.enclosingElement.toString())}, package: ${getPackageName(it.enclosingElement.toString())}")
-					}
+					processDaoMethodInfo(element = it, annotationType = DaoAnnotationType.ANNOTATION_SAVE, daoFunctions = daoFunctions)
 				}
 
 		roundEnvironment.getElementsAnnotatedWith(Load::class.java)
 				.forEach {
+					processDaoMethodInfo(element = it, annotationType = DaoAnnotationType.ANNOTATION_LOAD, daoFunctions = daoFunctions)
+				}
+
+
+		/*
+		roundEnvironment.getElementsAnnotatedWith(Load::class.java)
+				.forEach {
 					if(it is ExecutableElement) {
 						if(daoFunctions.containsKey(it.enclosingElement.toString())) {
-							//Pair(DaoAnnoatationTypes.ANNOTATION_SAVE,
+							//Pair(DaoAnnotationType.ANNOTATION_SAVE,
 							val fileFunctionMap = daoFunctions.getValue(it.enclosingElement.toString())
 
-							fileFunctionMap.get(DaoAnnoatationTypes.ANNOTATION_LOAD)?.let { saveArrayList ->
+							fileFunctionMap.get(DaoAnnotationType.ANNOTATION_LOAD)?.let { saveArrayList ->
 								saveArrayList.add(getSimpleMethodname(it.simpleName.toString()))
 							}
-									?: fileFunctionMap.set(DaoAnnoatationTypes.ANNOTATION_LOAD, arrayListOf(it.simpleName.toString())); daoFunctions.set(it.enclosingElement.toString(), fileFunctionMap) //TODO test if works properly - is it being saved?
+									?: fileFunctionMap.set(DaoAnnotationType.ANNOTATION_LOAD, arrayListOf(it.simpleName.toString())); daoFunctions.set(it.enclosingElement.toString(), fileFunctionMap) //TODO test if works properly - is it being saved?
 
 							daoFunctions.set(it.enclosingElement.toString(), fileFunctionMap)
 						} else {
-							daoFunctions.set(it.enclosingElement.toString(), hashMapOf(Pair(DaoAnnoatationTypes.ANNOTATION_LOAD, arrayListOf(it.simpleName.toString()))))
+							daoFunctions.set(it.enclosingElement.toString(), hashMapOf(Pair(DaoAnnotationType.ANNOTATION_LOAD, arrayListOf(it.simpleName.toString()))))
 						}
 						processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "Save Element: ${getSimpleMethodname(it.simpleName.toString())}, enclosing class: ${getClassName(it.enclosingElement.toString())}, package: ${getPackageName(it.enclosingElement.toString())}")
 					}
 				}
+		 */
 
 		/*
 
 		roundEnvironment.getElementsAnnotatedWith(Load::class.java)
 				.forEach {
 					if(it is ExecutableElement){
-						if(daoFunctions.containsKey(Pair(DaoAnnoatationTypes.ANNOTATION_LOAD, it.enclosingElement.toString()))){
-							val currentList = daoFunctions.getValue(Pair(DaoAnnoatationTypes.ANNOTATION_LOAD, it.enclosingElement.toString()))
+						if(daoFunctions.containsKey(Pair(DaoAnnotationType.ANNOTATION_LOAD, it.enclosingElement.toString()))){
+							val currentList = daoFunctions.getValue(Pair(DaoAnnotationType.ANNOTATION_LOAD, it.enclosingElement.toString()))
 							currentList.add(it.simpleName.toString())
-							daoFunctions.set(Pair(DaoAnnoatationTypes.ANNOTATION_LOAD, it.enclosingElement.toString()), currentList)
+							daoFunctions.set(Pair(DaoAnnotationType.ANNOTATION_LOAD, it.enclosingElement.toString()), currentList)
 						} else {
-							daoFunctions.set(Pair(DaoAnnoatationTypes.ANNOTATION_LOAD, it.enclosingElement.toString()), arrayListOf(it.simpleName.toString()))
+							daoFunctions.set(Pair(DaoAnnotationType.ANNOTATION_LOAD, it.enclosingElement.toString()), arrayListOf(it.simpleName.toString()))
 						}
 						processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "Load Element: ${getSimpleMethodname(it.simpleName.toString())}, enclosing class: ${getClassName(it.enclosingElement.toString())}, package: ${getPackageName(it.enclosingElement.toString())}")
 					}
@@ -133,7 +137,7 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 
 		if(!generated) {
 			generateTestFakeDaoClass(daoFunctions)
-			generateTestFakeDatabseClass("FakeDatabase", tempPack, daoFunctions, roundEnvironment)
+			generateTestFakeDatabseClass(daoFunctions, roundEnvironment)
 			generated = true
 		}
 
@@ -155,7 +159,7 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 	}
 
 
-	private fun generateClass(className: String, pack: String) {
+	private fun generateExampleClass(className: String, pack: String) {
 		val fileName = "Generated_$className"
 		val file = FileSpec.builder(pack, fileName)
 				.addType(TypeSpec.classBuilder(fileName)
@@ -170,7 +174,7 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 	}
 
 	//TODO pack and class name will be deprecated when finished
-	private fun generateTestFakeDaoClass(files: HashMap<String, HashMap<DaoAnnoatationTypes, ArrayList<String>>>) { //TODO get class as whole package here, separate it in here to pack and class name
+	private fun generateTestFakeDaoClass(files: HashMap<String, ArrayList<MethodInfo>>) { //TODO get class as whole package here, separate it in here to pack and class name
 		for(fileContent in files) {
 			val baseFakeDao = ClassName(getPackageName(fileContent.key), getClassName(fileContent.key)) //replace with more robust solution, move possibly to new package
 
@@ -178,26 +182,28 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 			val klass = TypeSpec.classBuilder(fileName)
 					.addSuperinterface(baseFakeDao)
 
-			for(fileMethodList in fileContent.value) {
+			for(method in fileContent.value) {
 				when {
-					fileMethodList.key == DaoAnnoatationTypes.ANNOTATION_SAVE -> {
-						for(method in fileMethodList.value){
+					method.daoAnnotationType == DaoAnnotationType.ANNOTATION_SAVE -> {
+						method.parameterType?.let {
+							parameterType ->
 							klass
-									.addFunction(FunSpec.builder(getSimpleMethodname(method))
+									.addFunction(FunSpec.builder(getSimpleMethodname(method.methodName))
 											//.returns(String::class)
+											//TODO I need to create also some helper object for saving and getting thhe data - Probably something simple like shared preferences
 											//TODO lets say that these methods can only work with String types - it would be yet another information I need to keep - or use MethodInfo class!!
-											.addParameter(ParameterSpec.builder("value", String::class).build())
+											.addParameter(ParameterSpec.builder("value", parameterType).build())
 											.addStatement("return")
 											.addModifiers(KModifier.OVERRIDE)
 											.build())
 						}
-
 					}
-					fileMethodList.key == DaoAnnoatationTypes.ANNOTATION_LOAD -> {
-						for(method in fileMethodList.value){
+					method.daoAnnotationType == DaoAnnotationType.ANNOTATION_LOAD -> {
+						method.returnType?.let {
+							returnType ->
 							klass
-									.addFunction(FunSpec.builder(getSimpleMethodname(method))
-											.returns(String::class)
+									.addFunction(FunSpec.builder(getSimpleMethodname(method.methodName))
+											.returns(returnType)
 											//TODO lets say that these methods can only work with String types - it would be yet another information I need to keep - or use MethodInfo class!!
 											.addStatement("return \"Fake data added by processor\"")
 											.addModifiers(KModifier.OVERRIDE)
@@ -215,30 +221,10 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 			file.writeTo(File(kaptKotlinGeneratedDir, "$fileName.kt"))
 		}
 
-/*
-		val file = FileSpec.builder(pack, fileName)
-				.addType(TypeSpec.classBuilder(fileName)
-						.addSuperinterface(baseFakeDao)
-						//.superclass(baseDao)
-						//.replaceAll("[^a-zA-Z]", "")
-						.addFunction(FunSpec.builder("getFakeData")
-								.returns(String::class)
-								.addStatement("return \"Fake data added by processor\"")
-								.addModifiers(KModifier.OVERRIDE)
-								.build())
-						.addFunction(FunSpec.builder("setFakeData")
-								.returns(String::class)
-								.addStatement("return \"Fake data added by processor\"")
-								.addModifiers(KModifier.OVERRIDE)
-								.build())
-						.build())
-				.build()
-*/
-
 
 	}
 
-	private fun generateTestFakeDatabseClass(className: String, pack: String, files: HashMap<String, HashMap<DaoAnnoatationTypes, ArrayList<String>>>, roundEnvironment: RoundEnvironment) {
+	private fun generateTestFakeDatabseClass(files: HashMap<String, ArrayList<MethodInfo>>, roundEnvironment: RoundEnvironment) {
 		//TODO we need to make sure that we successfully created dao object(s) to put it in database
 		roundEnvironment.getElementsAnnotatedWith(Database::class.java)
 				.forEach {
@@ -252,8 +238,8 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 					//TODO return type of method must be same as some entry in files: HashMap... argument. If not, error must be thrown.
 					// TODO If yes, I need to create new DatabaseImplementation class with implementation of getDao methods with appropriate return type
 
-					for(file in files){
-						for(databasegetDaoMethod in it.enclosedElements){
+					for(file in files) {
+						for(databasegetDaoMethod in it.enclosedElements) {
 
 							if(databasegetDaoMethod is ExecutableElement) {//TODO what to do if it is not this type? Just ignore?
 								processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "Dao Method Return type: ${databasegetDaoMethod.returnType.toString()}, ClassName: ${getClassName(file.key)}")
@@ -275,23 +261,6 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 
 					}
 
-
-
-
-				/*	val file = FileSpec.builder(getPackageName(it.toString()), fileName)
-							.addType(TypeSpec.classBuilder(fileName)
-									.superclass(baseFakeDatabase)
-
-									.addFunction(FunSpec.builder("getFakeDao")
-											.addModifiers(KModifier.OVERRIDE)
-											.returns(fakeDao)
-											.addStatement("return %T()", fakeDao)
-											.build())
-									.build())
-							.build()
-
-							*/
-
 					val file = FileSpec.builder(getPackageName(it.toString()), fileName)
 							.addType(klass.build())
 							.build()
@@ -299,9 +268,6 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 					val kaptKotlinGeneratedDir = processingEnv.options[KAPT_KOTLIN_GENERATED_OPTION_NAME]
 					file.writeTo(File(kaptKotlinGeneratedDir, "$fileName.kt"))
 				}
-
-
-
 
 
 	}
@@ -374,17 +340,14 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 
 }
 
-class MethodInfo(){
-	constructor(returnType: KClass<Any>,
-				methodName: String): this(){
-		this.returnType = returnType
-		this.methodName = methodName
-	}
-	var returnType: KClass<out Any> = String::class
-	var methodName: String = ""
-}
+class MethodInfo(
+		val parameterType: KClass<out Any>?,
+		val returnType: KClass<out Any>?,
+		val methodName: String,
+		val daoAnnotationType: DaoAnnotationType
+)
 
-enum class DaoAnnoatationTypes {
+enum class DaoAnnotationType {
 	ANNOTATION_SAVE,
 	ANNOTATION_LOAD
 }

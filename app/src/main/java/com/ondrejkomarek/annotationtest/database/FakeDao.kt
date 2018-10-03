@@ -7,7 +7,6 @@ import com.ondrejkomarek.annotation.Save
 @Dao
 interface FakeDao {
 
-	//here we can have two annotations: save and load, we can check in annotation processor that e.g. save does not have return type. Annotaion can have string parameter which will be used as a key for shared preferences
 	@Save
 	fun setFakeData(value: String)
 

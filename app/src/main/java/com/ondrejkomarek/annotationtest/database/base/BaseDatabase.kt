@@ -10,7 +10,8 @@ open class BaseDatabase{
 		fun <T: BaseDatabase>getGeneratedDatabase(klass : KClass<*>): T {
 			//TODO calling expected generated classes here
 			//get generated database object with generated implementation which implements Abstract class
-			val aClass = Class.forName( "com.ondrejkomarek.annotationtest.database.${klass.simpleName}Implementation" )as Class<T> //TODO remove hardcored path
+			@SuppressWarnings("unchecked")
+			val aClass = Class.forName( "${klass.qualifiedName}Implementation" )as Class<T>
 			return aClass.newInstance()//handle error if not annotated class is passed
 
 
