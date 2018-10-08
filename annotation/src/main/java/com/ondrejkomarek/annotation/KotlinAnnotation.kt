@@ -9,6 +9,10 @@ import kotlin.annotation.Retention
 annotation class Database
 
 @Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS)
+annotation class Dao
+
+@Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
 annotation class Save(
 	val preferenceKey: String
@@ -20,9 +24,6 @@ annotation class Load(
 		val preferenceKey: String
 )
 
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.CLASS)
-annotation class Dao
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)

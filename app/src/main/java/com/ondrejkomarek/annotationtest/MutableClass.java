@@ -5,7 +5,7 @@ import com.ondrejkomarek.annotation.ImmutableAnnotation;
 
 @ImmutableAnnotation
 public class MutableClass {
-	private String name;
+	private final String name;
 
 	public MutableClass( final String name ) {
 		this.name = name;

@@ -9,7 +9,7 @@ import android.widget.Toast
 import com.ondrejkomarek.annotation.*
 import com.ondrejkomarek.annotationtest.database.FakeDatabase
 import com.ondrejkomarek.annotationtest.database.NewDatabase
-import com.ondrejkomarek.annotationtest.database.base.BaseDatabase
+import com.ondrejkomarek.database.BaseDatabase
 import org.alfonz.arch.AlfonzActivity
 
 @KotlinClassAnnotation
@@ -28,16 +28,15 @@ class KotlinActivity @KotlinConstructorAnnotation constructor() : AlfonzActivity
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_common)
 		replaceFragment(KotlinFragment())
-		val asd = LinearLayout(baseContext)
+
 
 		Toast.makeText(baseContext, "Hello ${Generated_KotlinActivity().getName()}", Toast.LENGTH_LONG).show()
 
-		BaseDatabase.getGeneratedDatabase<FakeDatabase>(FakeDatabase::class).getFakeDao().setFakeData(42L, baseContext)
-		BaseDatabase.getGeneratedDatabase<NewDatabase>(NewDatabase::class).getNewDao().setNewData("New data", baseContext)
+		BaseDatabase.getGeneratedDatabase<FakeDatabase>().getFakeDao().setFakeData(42L, baseContext)
+		BaseDatabase.getGeneratedDatabase<NewDatabase>().getNewDao().setNewData("New data", baseContext)
 
-
-		Toast.makeText(baseContext, "Fake data: ${(BaseDatabase.getGeneratedDatabase<FakeDatabase>(FakeDatabase::class)).getFakeDao().getFakeData(baseContext)}", Toast.LENGTH_LONG).show()
-		Toast.makeText(baseContext, "New data: ${(BaseDatabase.getGeneratedDatabase<NewDatabase>(NewDatabase::class)).getNewDao().getNewData(baseContext)}", Toast.LENGTH_LONG).show()
+		Toast.makeText(baseContext, "Fake data: ${(BaseDatabase.getGeneratedDatabase<FakeDatabase>()).getFakeDao().getFakeData(baseContext)}", Toast.LENGTH_LONG).show()
+		Toast.makeText(baseContext, "New data: ${(BaseDatabase.getGeneratedDatabase<NewDatabase>()).getNewDao().getNewData(baseContext)}", Toast.LENGTH_LONG).show()
 
 
 
