@@ -18,6 +18,7 @@ import kotlin.reflect.KClass
 @SupportedAnnotationTypes("*") //com.ondrejkomarek.annotation.JavaAnnotation
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 class KotlinAnnotationProcessor : AbstractProcessor() {
+	val PREFERENCES_NAME = "\"KotlinAnnotationProcessorPreferences\""
 
 	//private lateinit var trees: Trees
 	private var generated: Boolean = false
@@ -36,20 +37,66 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 	}
 
 	//TODO kind of strange way how to get parameter and return type
-	private fun resolveElementType(typeMirror: TypeMirror?): KClass<out Any>?{
-		if (typeMirror == null){
+	private fun resolveElementType(typeMirror: TypeMirror?): KClass<out Any>? {
+		if(typeMirror == null) {
 			throw Exception("There must be one argument for data setter.")
 		}
 
-		when(typeMirror.kind){
-			TypeKind.SHORT ->  processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: SHORT")
-			TypeKind.LONG -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: LONG")
-			TypeKind.FLOAT -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: FLOAT")
-			TypeKind.DOUBLE -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: DOUBLE")
-			TypeKind.INT -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: INT")
-			TypeKind.BOOLEAN -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: BOOLEAN")
-			TypeKind.BYTE -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: BYTE")
-			TypeKind.CHAR -> processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: CHAR")
+		when(typeMirror.kind) {
+			TypeKind.FLOAT -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: FLOAT")
+				return Float::class
+
+			}
+			TypeKind.INT -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: INT")
+				return Int::class
+			}
+			TypeKind.SHORT -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: SHORT") // Java int and Kotlin Int is recognised as Short, so if we are using this type recognition, we can only support Int or short :/
+				return Int::class
+			}
+			TypeKind.LONG -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: LONG")// Kotlin e.g. Long is recognised well
+				return Long::class
+			}
+			TypeKind.BOOLEAN -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: BOOLEAN")
+				return Boolean::class
+			}
+			TypeKind.DECLARED -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: DECLARED")//String is recognised as this, hmm.
+				return String::class
+			}
+			TypeKind.DOUBLE -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: DOUBLE")
+				throw Exception("Double not supported")
+			}
+			TypeKind.BYTE -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: BYTE")
+				throw Exception("Byte not supported")
+			}
+			TypeKind.CHAR -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: CHAR")
+				throw Exception("Char not supported")
+			}
+			TypeKind.ARRAY -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: ARRAY")
+				throw Exception("ARRAY not supported")
+			}
+			TypeKind.NULL -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: NULL")
+				throw Exception("NULL not supported")
+			}
+			TypeKind.VOID -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: VOID")
+				throw Exception("VOID not supported")
+			}
+			TypeKind.NONE -> {
+				processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "Type: NONE")
+				throw Exception("There must be a type")
+			}
+
 		}
 
 		return String::class
@@ -77,16 +124,32 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 			if(daoFunctions.containsKey(element.enclosingElement.toString())) {
 				fileFunctions.addAll(daoFunctions.getValue(element.enclosingElement.toString()))
 			}
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "\n\n processDaoMethodInfo")
 
 			//TODO kind of strange way how to get parameter and return type
-			val returnType: KClass<out Any>? = if(annotationType == DaoAnnotationType.ANNOTATION_LOAD) {resolveElementType(element.returnType)} else {null}
-			val parameterType: KClass<out Any>? = if(annotationType == DaoAnnotationType.ANNOTATION_SAVE) {resolveElementType(element.parameters.firstOrNull()?.asType())} else {null}
+			val returnType: KClass<out Any>? = if(annotationType == DaoAnnotationType.ANNOTATION_LOAD) {
+				resolveElementType(element.returnType)
+			} else {
+				null
+			}
+			val parameterType: KClass<out Any>? = if(annotationType == DaoAnnotationType.ANNOTATION_SAVE) {
+				resolveElementType(element.parameters.firstOrNull()?.asType())
+			} else {
+				null
+			}
 
-			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "\n\nANNOTATION_SAVE - PROCESSING: ${element.simpleName.toString()}")
-			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "returnType: ${returnType?.let { "Notnull "}?: "null"} ")
-			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "parameterType: ${parameterType?.let { "Notnull "}?: "null"} ")
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "ANNOTATION_SAVE - PROCESSING: ${element.simpleName.toString()}")
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "returnType: ${returnType?.let { "Notnull " }
+					?: "null"} ")
+			processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "parameterType: ${parameterType?.let { "Notnull " }
+					?: "null"} ")
 
-			fileFunctions.add(MethodInfo(parameterType, returnType, element.simpleName.toString(), annotationType))
+			val preferenceKey = when(annotationType){
+				DaoAnnotationType.ANNOTATION_LOAD -> element.getAnnotation(Load::class.java).preferenceKey
+				DaoAnnotationType.ANNOTATION_SAVE -> element.getAnnotation(Save::class.java).preferenceKey
+			}
+
+			fileFunctions.add(MethodInfo(parameterType, returnType, element.simpleName.toString(), annotationType, preferenceKey))
 			daoFunctions.set(element.enclosingElement.toString(), fileFunctions)
 
 			processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "${if(annotationType == DaoAnnotationType.ANNOTATION_LOAD) {
@@ -221,6 +284,8 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 
 	//TODO pack and class name will be deprecated when finished
 	private fun generateTestFakeDaoClass(files: HashMap<String, ArrayList<MethodInfo>>) { //TODO get class as whole package here, separate it in here to pack and class name
+		val contextType = ClassName("android.content", "Context") //need to define type like this because we can not import it here
+
 		for(fileContent in files) {
 			val baseFakeDao = ClassName(getPackageName(fileContent.key), getClassName(fileContent.key)) //replace with more robust solution, move possibly to new package
 
@@ -235,12 +300,13 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 					method.daoAnnotationType == DaoAnnotationType.ANNOTATION_SAVE -> {
 
 						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "\n\nANNOTATION_SAVE 1 ${method.methodName}")
-						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "returnType: ${method.returnType?.let { "Notnull "}?: "null"} ")
-						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "-> REQ parameterType: ${method.parameterType?.let { "Notnull "}?: "null"} ")
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "returnType: ${method.returnType?.let { "Notnull " }
+								?: "null"} ")
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "-> REQ parameterType: ${method.parameterType?.let { "Notnull " }
+								?: "null"} ")
 
 
-						method.parameterType?.let {
-							parameterType ->
+						method.parameterType?.let { parameterType ->
 							processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "ANNOTATION_SAVE 2")
 
 							klass
@@ -249,6 +315,8 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 											//TODO I need to create also some helper object for saving and getting thhe data - Probably something simple like shared preferences
 											//TODO lets say that these methods can only work with String types - it would be yet another information I need to keep - or use MethodInfo class!!
 											.addParameter(ParameterSpec.builder("value", parameterType).build())
+											.addParameter(ParameterSpec.builder("context", contextType).build())
+											.addStatement(generateSaveToPreferences(method.preferenceKey, method.parameterType.simpleName,"value"))
 											.addStatement("return")
 											.addModifiers(KModifier.OVERRIDE)
 											.build())
@@ -256,19 +324,21 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 					}
 					method.daoAnnotationType == DaoAnnotationType.ANNOTATION_LOAD -> {
 						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "\n\nANNOTATION_LOAD 1${method.methodName}")
-						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "-> REQ returnType: ${method.returnType?.let { "Notnull "}?: "null"} ")
-						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "parameterType: ${method.parameterType?.let { "Notnull "}?: "null"} ")
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "-> REQ returnType: ${method.returnType?.let { "Notnull " }
+								?: "null"} ")
+						processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "parameterType: ${method.parameterType?.let { "Notnull " }
+								?: "null"} ")
 
-
-						method.returnType?.let {
-							returnType ->
+//TODO !!! I should add context parameter to set and get methods so I can really work with shared preferences to have at least some functionality
+						method.returnType?.let { returnType ->
 							processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "ANNOTATION_LOAD 2")
 
 							klass
 									.addFunction(FunSpec.builder(getSimpleMethodname(method.methodName))
 											.returns(returnType)
+											.addParameter(ParameterSpec.builder("context", contextType).build())
 											//TODO lets say that these methods can only work with String types - it would be yet another information I need to keep - or use MethodInfo class!!
-											.addStatement("return \"Fake data added by processor\"")
+											.addStatement("return ${generateGetFromPreferences(method.preferenceKey, method.returnType.simpleName)}")
 											.addModifiers(KModifier.OVERRIDE)
 											.build())
 						}
@@ -283,9 +353,34 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 			val kaptKotlinGeneratedDir = processingEnv.options[KAPT_KOTLIN_GENERATED_OPTION_NAME]
 			file.writeTo(File(kaptKotlinGeneratedDir, "$fileName.kt"))
 		}
-
-
 	}
+
+	private fun generateGetFromPreferences(key: String, type: String?): String{
+		if(type == null){
+			throw Exception("Return type for Get functions must be set")
+		}
+		val defaultValue = when(type){
+			"String" -> "\"\""
+			"Long" -> "0L"
+			"Int" -> "0"
+			"Float" -> "0.0f"
+			"Boolean" -> "false"
+			else -> ""
+		}
+
+
+		return "${generateGetPreferences()}.get${type}(\"$key\", $defaultValue)"
+	}
+
+	private fun generateSaveToPreferences(key: String, type: String?, value: String): String{
+		if(type == null){
+			throw Exception("Parameter type for Set functions must be set")
+		}
+		return "${generateGetPreferences()}.edit().put${type}(\"$key\", $value).commit()"
+	}
+
+	private fun generateGetPreferences(): String = "context.getSharedPreferences($PREFERENCES_NAME, Context.MODE_PRIVATE)"
+
 
 	private fun generateTestFakeDatabseClass(files: HashMap<String, ArrayList<MethodInfo>>, roundEnvironment: RoundEnvironment) {
 		//TODO we need to make sure that we successfully created dao object(s) to put it in database
@@ -407,7 +502,8 @@ class MethodInfo(
 		val parameterType: KClass<out Any>?,
 		val returnType: KClass<out Any>?,
 		val methodName: String,
-		val daoAnnotationType: DaoAnnotationType
+		val daoAnnotationType: DaoAnnotationType,
+		val preferenceKey: String
 )
 
 enum class DaoAnnotationType {

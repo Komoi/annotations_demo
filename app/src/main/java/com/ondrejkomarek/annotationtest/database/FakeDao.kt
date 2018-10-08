@@ -1,5 +1,6 @@
 package com.ondrejkomarek.annotationtest.database
 
+import android.content.Context
 import com.ondrejkomarek.annotation.Dao
 import com.ondrejkomarek.annotation.Load
 import com.ondrejkomarek.annotation.Save
@@ -7,10 +8,10 @@ import com.ondrejkomarek.annotation.Save
 @Dao
 interface FakeDao {
 
-	@Save
-	fun setFakeData(value: String)
+	@Save("fake_data")
+	fun setFakeData(value: Long, context: Context)
 
-	@Load
-	fun getFakeData(): String
+	@Load("fake_data")
+	fun getFakeData(context: Context): Long
 
 }

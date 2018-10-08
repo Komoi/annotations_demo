@@ -1,5 +1,6 @@
 package com.ondrejkomarek.annotationtest
 
+import android.content.Context
 import android.databinding.DataBindingUtil.setContentView
 import android.os.Bundle
 import android.util.Log
@@ -22,7 +23,6 @@ class KotlinActivity @KotlinConstructorAnnotation constructor() : AlfonzActivity
 
 	@KotlinFunctionAnnotation
 	override fun onCreate(@KotlinValueParameterAnnotation savedInstanceState: Bundle?) {
-
 		var localVar = ""
 		Log.d("", localVar)
 		super.onCreate(savedInstanceState)
@@ -32,8 +32,12 @@ class KotlinActivity @KotlinConstructorAnnotation constructor() : AlfonzActivity
 
 		Toast.makeText(baseContext, "Hello ${Generated_KotlinActivity().getName()}", Toast.LENGTH_LONG).show()
 
-		Toast.makeText(baseContext, "Fake data: ${(BaseDatabase.getGeneratedDatabase<FakeDatabase>(FakeDatabase::class)).getFakeDao().getFakeData()}", Toast.LENGTH_LONG).show()
-		Toast.makeText(baseContext, "New data: ${(BaseDatabase.getGeneratedDatabase<NewDatabase>(NewDatabase::class)).getNewDao().getNewData()}", Toast.LENGTH_LONG).show()
+		BaseDatabase.getGeneratedDatabase<FakeDatabase>(FakeDatabase::class).getFakeDao().setFakeData(42L, baseContext)
+		BaseDatabase.getGeneratedDatabase<NewDatabase>(NewDatabase::class).getNewDao().setNewData("New data", baseContext)
+
+
+		Toast.makeText(baseContext, "Fake data: ${(BaseDatabase.getGeneratedDatabase<FakeDatabase>(FakeDatabase::class)).getFakeDao().getFakeData(baseContext)}", Toast.LENGTH_LONG).show()
+		Toast.makeText(baseContext, "New data: ${(BaseDatabase.getGeneratedDatabase<NewDatabase>(NewDatabase::class)).getNewDao().getNewData(baseContext)}", Toast.LENGTH_LONG).show()
 
 
 

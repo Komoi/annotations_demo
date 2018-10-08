@@ -10,11 +10,15 @@ annotation class Database
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-annotation class Save
+annotation class Save(
+	val preferenceKey: String
+)
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-annotation class Load
+annotation class Load(
+		val preferenceKey: String
+)
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
