@@ -24,13 +24,67 @@
 			android:id="@+id/home_text"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
+			android:paddingBottom="12dp"
 			android:text="Kotlin activity"
-			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintLeft_toLeftOf="parent"
 			app:layout_constraintRight_toRightOf="parent"
 			app:layout_constraintTop_toTopOf="parent"
 			android:textSize="30sp"/>
 
+		<EditText
+			android:id="@+id/float_edittext"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:hint="Float value"
+			android:inputType="numberDecimal"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/home_text"
+			android:textSize="30sp"
+			/>
+
+		<Button
+			android:id="@+id/float_savebutton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Save value"
+			android:onClick="@{() -> view.onSaveFloatValueClick()}"
+			app:layout_constraintLeft_toRightOf="@+id/float_edittext"
+			app:layout_constraintTop_toBottomOf="@+id/home_text"
+			android:textSize="30sp"
+			/>
+
+		<EditText
+			android:id="@+id/string_edittext"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:hint="String value"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/float_edittext"
+			android:textSize="30sp"
+			/>
+
+
+		<Button
+			android:id="@+id/string_savebutton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Save value"
+			android:onClick="@{() -> view.onSaveStringValueClick()}"
+			app:layout_constraintLeft_toRightOf="@+id/string_edittext"
+			app:layout_constraintTop_toBottomOf="@+id/float_edittext"
+			android:textSize="30sp"
+			/>
+
+		<Button
+			android:id="@+id/show_values_button"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Show values"
+			android:onClick="@{() -> view.onShowValuesClick()}"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/home_text" />
 
 
 		<Button
@@ -41,8 +95,7 @@
 			android:onClick="@{() -> view.onOpenJavaActivityClick()}"
 			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintLeft_toLeftOf="parent"
-			app:layout_constraintRight_toRightOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/home_text" />
+			app:layout_constraintRight_toRightOf="parent" />
 
 	</android.support.constraint.ConstraintLayout>
 </layout>

@@ -6,12 +6,12 @@ import com.ondrejkomarek.annotation.Load
 import com.ondrejkomarek.annotation.Save
 
 @Dao
-interface FakeDao {
+interface KotlinDao {
 
-	@Save("fake_data")
-	fun setFakeData(value: Long, context: Context)
+	@Save("kotlin_long_data") //NOTE keys I am using for sharedprefs
+	fun setLongData(value: Long, context: Context)
 
-	@Load("fake_data")
-	fun getFakeData(context: Context): Long
+	@Load("kotlin_long_data")
+	fun getLongData(context: Context): Long
 
 }

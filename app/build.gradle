@@ -52,8 +52,8 @@ dependencies {
 	kapt "com.android.databinding:compiler:$gradle_plugin_version"
 	implementation "com.android.databinding:library:$databinding_version"
 	implementation "com.android.databinding:adapters:$databinding_version"
-	implementation "org.alfonz:alfonz-arch:0.9.0"//Kotlin reflection implementation is not found at runtime. Make sure you have kotlin-reflect.jar in the classpath
-
+	implementation "org.alfonz:alfonz-arch:0.9.0"
+	//implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"//Kotlin reflection implementation is not found at runtime. Make sure you have kotlin-reflect.jar in the classpath
 
 	implementation project(':annotation')
 	implementation project(':database')

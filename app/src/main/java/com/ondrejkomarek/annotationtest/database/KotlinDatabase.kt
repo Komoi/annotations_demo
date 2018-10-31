@@ -4,6 +4,6 @@ import com.ondrejkomarek.annotation.Database
 import com.ondrejkomarek.database.BaseDatabase
 
 @Database
-abstract class FakeDatabase : BaseDatabase() {
-	abstract fun getFakeDao(): FakeDao
+abstract class KotlinDatabase : BaseDatabase() {
+	abstract fun getKotlinDao(): KotlinDao
 }

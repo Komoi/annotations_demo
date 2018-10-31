@@ -5,7 +5,7 @@ import com.ondrejkomarek.database.BaseDatabase;
 
 
 @Database
-public abstract class NewDatabase extends BaseDatabase
+public abstract class JavaDatabase extends BaseDatabase
 {
- public abstract NewDao getNewDao();
+ public abstract JavaDao getJavaDao();
 }
