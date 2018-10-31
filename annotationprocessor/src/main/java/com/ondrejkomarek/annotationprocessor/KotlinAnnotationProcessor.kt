@@ -124,13 +124,6 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 
 			fileFunctions.add(MethodInfo(parameterType, returnType, element.simpleName.toString(), annotationType, preferenceKey))
 			daoFunctions.set(element.enclosingElement.toString(), fileFunctions)
-
-			/*processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "${if(annotationType == DaoAnnotationType.ANNOTATION_LOAD) {
-				"Load"
-			} else {
-				"Save"
-			}} Element: ${getSimpleMethodname(element.simpleName.toString())}, enclosing class: ${getClassName(element.enclosingElement.toString())}, package: ${getPackageName(element.enclosingElement.toString())}")
-			*/
 		}
 	}
 
@@ -202,13 +195,6 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 				when {
 					method.daoAnnotationType == DaoAnnotationType.ANNOTATION_SAVE -> {
 
-						/*processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "\n\nANNOTATION_SAVE 1 ${method.methodName}")
-						processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "returnType: ${method.returnType?.let { "Notnull " }
-								?: "null"} ")
-						processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "-> REQ parameterType: ${method.parameterType?.let { "Notnull " }
-								?: "null"} ")
-*/
-
 						method.parameterType?.let { parameterType ->
 							//processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "ANNOTATION_SAVE 2")
 
@@ -223,14 +209,6 @@ class KotlinAnnotationProcessor : AbstractProcessor() {
 						}
 					}
 					method.daoAnnotationType == DaoAnnotationType.ANNOTATION_LOAD -> {
-
-						/*	processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "\n\nANNOTATION_LOAD 1${method.methodName}")
-							processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "-> REQ returnType: ${method.returnType?.let { "Notnull " }
-									?: "null"} ")
-							processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "parameterType: ${method.parameterType?.let { "Notnull " }
-									?: "null"} ")
-									*/
-
 						method.returnType?.let { returnType ->
 							//processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, "ANNOTATION_LOAD 2")
 

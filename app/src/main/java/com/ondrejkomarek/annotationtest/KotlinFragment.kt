@@ -47,8 +47,8 @@ class KotlinFragment: AlfonzBindingFragment<KotlinViewModel, FragmentKotlinBindi
 	}
 
 	override fun onShowValuesClick() {
-		Toast.makeText(context, "Long data: ${(BaseDatabase.getGeneratedDatabase<KotlinDatabase>()).getKotlinDao().getLongData(context!!)}", Toast.LENGTH_LONG).show()
-		Toast.makeText(context, "String data: ${(BaseDatabase.getGeneratedDatabase<JavaDatabase>()).getJavaDao().getStringData(context!!)}", Toast.LENGTH_LONG).show()
+		binding.floatValue.setText(BaseDatabase.getGeneratedDatabase<KotlinDatabase>().getKotlinDao().getLongData(context!!).toString())
+		binding.stringValue.setText(BaseDatabase.getGeneratedDatabase<JavaDatabase>().getJavaDao().getStringData(context!!))
 	}
 
 	override fun onSaveFloatValueClick() {

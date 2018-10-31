@@ -36,7 +36,7 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:hint="Float value"
-			android:inputType="numberDecimal"
+			android:inputType="number"
 			app:layout_constraintLeft_toLeftOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/home_text"
 			android:textSize="30sp"
@@ -79,12 +79,31 @@
 			android:id="@+id/show_values_button"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
+			android:layout_marginTop="20dp"
 			android:text="Show values"
 			android:onClick="@{() -> view.onShowValuesClick()}"
-			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintLeft_toLeftOf="parent"
 			app:layout_constraintRight_toRightOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/home_text" />
+			app:layout_constraintTop_toBottomOf="@+id/string_savebutton" />
+
+		<TextView
+			android:id="@+id/float_value"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="20dp"
+			android:textSize="30sp"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/show_values_button" />
+
+		<TextView
+			android:id="@+id/string_value"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="30sp"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/float_value" />
 
 
 		<Button
